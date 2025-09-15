@@ -1,0 +1,613 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "c8f0c414-ecb5-4218-a05c-383d77b3e745",
+      "name": "Extract Document PDF2",
+      "type": "n8n-nodes-base.extractFromFile",
+      "position": [
+        176,
+        48
+      ],
+      "typeVersion": 1,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "content": "**Add direct link to CV and Job description**",
+        "height": 80,
+        "width": 187.37066290133808
+      },
+      "id": "21dfd75d-7fba-4ce7-83ce-6cf65cc8b0c8",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -224,
+        -80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "**Replace OpenAI connection**",
+        "height": 80,
+        "width": 187.37066290133808
+      },
+      "id": "a4d73f24-a51d-4e85-bac2-2561b29ba7f5",
+      "name": "Sticky Note8",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        -80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "83274f6f-c73e-4d5e-946f-c6dfdf7ed1c4",
+              "name": "json_parsed",
+              "type": "object",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6f9c7c95-623a-47be-b96a-7c22cfa0cceb",
+      "name": "Parsed JSON2",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1072,
+        48
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Extract the candidate’s main details from the following CV text and return them in JSON according to the schema.\n\nCV TEXT:\n\"\"\"\n{{ $('Extract Document PDF2').item.json.text }}\n\"\"\"\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an assistant that extracts structured information from resumes/CVs. \nAlways return the data strictly in the given JSON format, with no extra text. \nIf information is missing, return an empty array or null for that field.\nif there is more fields than what you need only take the things that are required in the output structure. Don't divide skills into technical or soft, I want you to combine all of them under skills\n\nMAKE SURE TO Follow OUTPUT STRUCTURE at all times"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        48
+      ],
+      "id": "4a07be1a-c46d-46c4-a728-6c0a660b13bd",
+      "name": "AI Agent1",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"name\": \"cv_extraction\",\n  \"description\": \"Structured data for extracting main details from a candidate's CV\",\n  \"strict\": true,\n  \"schema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"skills\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"type\": \"string\"\n        },\n        \"description\": \"List of the candidate's key skills\"\n      },\n      \"experience\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"job_title\": {\n              \"type\": \"string\",\n              \"description\": \"Title or role held by the candidate\"\n            },\n            \"company\": {\n              \"type\": \"string\",\n              \"description\": \"Company or organization name\"\n            },\n            \"start_date\": {\n              \"type\": \"string\",\n              \"description\": \"Start date of the job (YYYY-MM or YYYY)\"\n            },\n            \"end_date\": {\n              \"type\": \"string\",\n              \"description\": \"End date of the job (YYYY-MM, YYYY, or 'Present')\"\n            },\n            \"description\": {\n              \"type\": \"string\",\n              \"description\": \"Brief description of responsibilities and achievements\"\n            }\n          },\n          \"required\": [\"job_title\", \"company\"],\n          \"additionalProperties\": false\n        },\n        \"description\": \"List of the candidate's work experiences\"\n      },\n      \"education\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"degree\": {\n              \"type\": \"string\",\n              \"description\": \"Degree earned by the candidate\"\n            },\n            \"field\": {\n              \"type\": \"string\",\n              \"description\": \"Field of study\"\n            },\n            \"institution\": {\n              \"type\": \"string\",\n              \"description\": \"Educational institution name\"\n            },\n            \"start_date\": {\n              \"type\": \"string\",\n              \"description\": \"Start date of the education (YYYY-MM or YYYY)\"\n            },\n            \"end_date\": {\n              \"type\": \"string\",\n              \"description\": \"End date of the education (YYYY-MM or YYYY)\"\n            }\n          },\n          \"required\": [\"degree\", \"institution\"],\n          \"additionalProperties\": false\n        },\n        \"description\": \"List of the candidate's educational background\"\n      }\n    },\n    \"required\": [\"skills\", \"experience\", \"education\"],\n    \"additionalProperties\": false\n  }\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        832,
+        368
+      ],
+      "id": "8b47b09a-53e8-485d-b97b-9ac0ecbadd5a",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        688,
+        368
+      ],
+      "id": "81fdaa82-c0b3-4734-8e88-9d7fb3a80710",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "eHVT7houMSEyJcVc",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "2973003a-f866-4985-aca0-753e072b7432",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        48
+      ],
+      "id": "5d64caac-2749-4a95-9448-6ddf52c5b046",
+      "name": "Webhook",
+      "webhookId": "2973003a-f866-4985-aca0-753e072b7432"
+    },
+    {
+      "parameters": {
+        "tableId": "cv_profiles",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "skills",
+              "fieldValue": "={{ $json.json_parsed.skills }}"
+            },
+            {
+              "fieldId": "experience",
+              "fieldValue": "={{ $json.json_parsed.experience }}"
+            },
+            {
+              "fieldId": "education",
+              "fieldValue": "={{ $json.json_parsed.education }}"
+            },
+            {
+              "fieldId": "file_url",
+              "fieldValue": "={{ $('HTTP Request').item.json.Key }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        48
+      ],
+      "id": "da0c1494-d6f6-488d-9cf6-2051c640e35d",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "CUfwEnerYS1swVSN",
+          "name": "Supabase account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// This runs for the whole input (use \"Function\" node, not \"Function Item\")\nreturn items.map(item => {\n  if (item.binary && item.binary.data) {\n    // duplicate binary data into two keys\n    item.binary.data1 = item.binary.data;\n  }\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        48
+      ],
+      "id": "8c3f1d25-3532-4a5d-bf45-a43a39f39643",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ysxetbpryeajihrppdhj.supabase.co/storage/v1/object/CVs/{{ $('Webhook').item.json.body.time_filename }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "upsert",
+              "value": "true"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer "
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        48
+      ],
+      "id": "773f14b4-206d-48a9-b6a8-4c214ca91441",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "CVs",
+          "mode": "list",
+          "cachedResultName": "CVs"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        1584,
+        48
+      ],
+      "id": "83020cfe-bfd6-49f0-8543-e46e1e6d4164",
+      "name": "Qdrant Vector Store",
+      "credentials": {
+        "qdrantApi": {
+          "id": "fht5i9p3PFDhE9qh",
+          "name": "QdrantApi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1456,
+        384
+      ],
+      "id": "ceb00255-dbfe-41c3-b3b7-1b00e31423ea",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "eHVT7houMSEyJcVc",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "education",
+                "value": "={{ $json.education }}"
+              },
+              {
+                "name": "experience",
+                "value": "={{ $json.experience }}"
+              },
+              {
+                "name": "skills",
+                "value": "={{ $json.skills }}"
+              },
+              {
+                "name": "supabase_record_id",
+                "value": "={{ $json.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1632,
+        384
+      ],
+      "id": "a9638464-dbe3-4207-bc3e-b121297f4b9a",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1936,
+        48
+      ],
+      "id": "5042f208-983a-4e3e-b67a-8dcbe3968422",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "CVs",
+          "mode": "list",
+          "cachedResultName": "CVs"
+        },
+        "prompt": "={{ $json.body.message }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        144,
+        736
+      ],
+      "id": "01e149e4-6800-4eeb-8815-44bd66200f3c",
+      "name": "Qdrant Vector Store1",
+      "credentials": {
+        "qdrantApi": {
+          "id": "fht5i9p3PFDhE9qh",
+          "name": "QdrantApi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        144,
+        992
+      ],
+      "id": "e06dfee5-1ad3-4bc3-a936-3ac22798121e",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "eHVT7houMSEyJcVc",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "getresults",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -64,
+        736
+      ],
+      "id": "026c6328-9f59-4642-a9c2-583ba2b4761d",
+      "name": "Webhook1",
+      "webhookId": "2973003a-f866-4985-aca0-753e072b7432"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        608,
+        736
+      ],
+      "id": "51d763db-1de1-432a-b3f9-0e65c76f20e7",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        768,
+        576
+      ],
+      "id": "01d54122-8d88-45b4-b28b-aa1fbd653210",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "eHVT7houMSEyJcVc",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Extract Document PDF2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsed JSON2": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Parsed JSON2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Extract Document PDF2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "29994e13a1c8d567e7d36820a10e644337b48a52cd593e148407330fc7541146"
+  }
+}
