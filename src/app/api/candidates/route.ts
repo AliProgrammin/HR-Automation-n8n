@@ -21,7 +21,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch CV profiles' }, { status: 500 })
     }
 
-    return NextResponse.json(data)
+    // Parse JSON strings to arrays for frontend consumption
+    const parsedData = data?.map(profile => {
+      try {
+        return {
+          ...profile,
+          skills: typeof profile.skills === 'string' ? JSON.parse(profile.skills) : (profile.skills || []),
+          experience: typeof profile.experience === 'string' ? JSON.parse(profile.experience) : (profile.experience || []),
+          education: typeof profile.education === 'string' ? JSON.parse(profile.education) : (profile.education || []),
+        }
+      } catch (parseError) {
+        console.error('Error parsing profile data:', parseError, 'Profile ID:', profile.id)
+        return {
+          ...profile,
+          skills: [],
+          experience: [],
+          education: [],
+        }
+      }
+    }) || []
+
+    return NextResponse.json(parsedData)
   } catch (error) {
     console.error('API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -51,7 +71,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create CV profile' }, { status: 500 })
     }
 
-    return NextResponse.json(data[0], { status: 201 })
+    // Parse JSON strings to arrays for consistent response format
+    const parsedProfile = data[0] ? (() => {
+      try {
+        return {
+          ...data[0],
+          skills: typeof data[0].skills === 'string' ? JSON.parse(data[0].skills) : (data[0].skills || []),
+          experience: typeof data[0].experience === 'string' ? JSON.parse(data[0].experience) : (data[0].experience || []),
+          education: typeof data[0].education === 'string' ? JSON.parse(data[0].education) : (data[0].education || []),
+        }
+      } catch (parseError) {
+        console.error('Error parsing new profile data:', parseError, 'Profile ID:', data[0].id)
+        return {
+          ...data[0],
+          skills: [],
+          experience: [],
+          education: [],
+        }
+      }
+    })() : null
+
+    return NextResponse.json(parsedProfile, { status: 201 })
   } catch (error) {
     console.error('API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

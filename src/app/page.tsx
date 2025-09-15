@@ -5,7 +5,7 @@ import {
   Search,
   Upload,
   Eye,
-  Edit,
+
   Trash2,
   Moon,
   Sun,
@@ -169,6 +169,51 @@ export default function CandidateDashboard() {
     setSearchTerm('');
     setSearchResults([]);
     setSearchError(null);
+  };
+
+  const handleViewCV = (profile: ParsedCVProfile) => {
+    if (profile.file_url) {
+      // Check if the URL is already a full URL or just a relative path
+      let fullUrl = profile.file_url;
+      if (!profile.file_url.startsWith('http')) {
+        // Construct the full Supabase storage URL
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ysxetbpryeajihrppdhj.supabase.co';
+        fullUrl = `${supabaseUrl}/storage/v1/object/public/${profile.file_url}`;
+      }
+      window.open(fullUrl, '_blank');
+    } else {
+      alert('No CV file available for this profile.');
+    }
+  };
+
+  const handleDeleteCV = async (profileId: string) => {
+    if (!confirm('Are you sure you want to delete this CV profile? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/candidates/${profileId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete CV profile');
+      }
+
+      // Remove the profile from the local state
+      setCvProfiles(prev => prev.filter(profile => profile.id !== profileId));
+      
+      // Also remove from search results if present
+      setSearchResults(prev => prev.filter(result => 
+        result.document.metadata.supabase_record_id !== profileId && 
+        result.document.metadata.supabase_id !== profileId
+      ));
+
+      alert('CV profile deleted successfully.');
+    } catch (error) {
+      console.error('Error deleting CV profile:', error);
+      alert('Failed to delete CV profile. Please try again.');
+    }
   };
 
   // Handle Enter key press in search input
@@ -431,7 +476,7 @@ export default function CandidateDashboard() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1">
-                          {profile.skills?.slice(0, 3).map((skill: string) => (
+                          {Array.isArray(profile.skills) ? profile.skills.slice(0, 3).map((skill: string) => (
                             <Badge
                               key={skill}
                               variant="secondary"
@@ -439,13 +484,13 @@ export default function CandidateDashboard() {
                             >
                               {skill}
                             </Badge>
-                          ))}
-                          {(profile.skills?.length || 0) > 3 && (
+                          )) : null}
+                          {Array.isArray(profile.skills) && profile.skills.length > 3 && (
                             <Badge
                               variant="outline"
                               className="text-xs border-accent/50 text-foreground dark:border-accent/50 dark:text-foreground"
                             >
-                              +{(profile.skills?.length || 0) - 3}
+                              +{profile.skills.length - 3}
                             </Badge>
                           )}
                         </div>
@@ -467,6 +512,7 @@ export default function CandidateDashboard() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleViewCV(profile)}
                           >
                             <Eye className="h-4 w-4" />
                             <span className="sr-only">View candidate</span>
@@ -474,15 +520,8 @@ export default function CandidateDashboard() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                          >
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Edit candidate</span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleDeleteCV(profile.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                             <span className="sr-only">Delete candidate</span>
