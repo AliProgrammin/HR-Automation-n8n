@@ -96,6 +96,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
       const response = await fetch('https://conchobar.app.n8n.cloud/webhook/2973003a-f866-4985-aca0-753e072b7432', {
         method: 'POST',
         body: formData,
+        
       });
 
       clearInterval(progressInterval);
